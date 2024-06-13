@@ -1,32 +1,53 @@
 import { Cell, beginCell, toNano } from "@ton/core";
 import { hex } from '../build/main.compiled.json';
-import { Blockchain } from "@ton/sandbox";
+import { Blockchain, SandboxContract, TreasuryContract } from "@ton/sandbox";
 import { MainContract } from "../wrappers/MainContract";
 import "@ton/test-utils";
 
 describe('main.fc contract tests', ()=>{
-    it("our first tests", async()=>{
-        const blockchain = await Blockchain.create();
+
+    let blockchain: Blockchain;
+    let myContract: SandboxContract<MainContract>;
+    let senderWallet: SandboxContract<TreasuryContract>;
+    let adminWallet: SandboxContract<TreasuryContract>;
+    let affiliateWallet: SandboxContract<TreasuryContract>;
+
+    beforeEach(async ()=>{
+        blockchain = await Blockchain.create();
         const codeCell = await Cell.fromBoc(Buffer.from(hex, 'hex'))[0];
-        const nameCell = beginCell().storeBuffer(Buffer.from('{name:yash, age:20}', 'utf-8')).endCell();
-        const senderWallet = await blockchain.treasury('sender');
-        const initWallet = await blockchain.treasury('initWallet')
+        const companyNameCell = beginCell().storeBuffer(Buffer.from('test company','utf-8')).endCell();
+        const originalUrlCell = beginCell().storeBuffer(Buffer.from('www.originalUrl.com', 'utf-8')).endCell();
+        const categoryCell = beginCell().storeBuffer(Buffer.from('gaming', 'utf-8')).endCell();
+
+        senderWallet = await blockchain.treasury('sender');
+        adminWallet = await blockchain.treasury('adminWallet');
+        affiliateWallet = await blockchain.treasury('affiliateWallet');
+
         const config = {
-            address: senderWallet.address,
-            counter: 1,
-            name: nameCell,
+            adminAddress: adminWallet.address,
+            budget: 1,
+            campaignWalletAddress: senderWallet.address,
+            category: categoryCell,
+            companyName: companyNameCell,
+            originalUrl: originalUrlCell,
         }
         const createConfig = await MainContract.createFromConfig(config, codeCell);
-        const myContract = await blockchain.openContract(createConfig);
-        
-        await myContract.sendIncrementCounter(senderWallet.getSender(), toNano("1"), 1, 1, initWallet.address);
+        myContract = await blockchain.openContract(createConfig);
+    })
 
-        const data = await myContract.getData();
-        const decodeNameCell = data.name
-        const nameSlice = decodeNameCell.beginParse();
-        const nameBytes = nameSlice.preloadBuffer(nameSlice.remainingBits / 8); // Preload the buffer from the slice
-        const name = Buffer.from(nameBytes).toString('utf-8'); // Convert buffer to string
-        expect(name).toBe('{name:yash, age:20}')
-        expect(data.counter).toBe(3)
+    it("Campaign creation tests", async()=>{
+        await myContract.sendCampaignCreation(senderWallet.getSender(), toNano("5"), 1);
+
+        const withdrawRequest = await myContract.sendWithdrawRequest(adminWallet.getSender(), toNano("0.05"), affiliateWallet.address, toNano("1"));
+        expect(withdrawRequest.transactions).toHaveTransaction({
+            from: myContract.address,
+            to: affiliateWallet.address,
+            success: true,
+            value: toNano(1),
+          });
+
+
+        const data = await myContract.getContractBalance();
+        console.log('data--->', data)
     })
 })

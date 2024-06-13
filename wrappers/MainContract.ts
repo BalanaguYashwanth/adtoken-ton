@@ -1,13 +1,23 @@
-import { Address, Contract, Cell, contractAddress, beginCell, ContractProvider, SendMode } from "@ton/core";
+import { Address, Contract, Cell, contractAddress, beginCell, ContractProvider, SendMode, Sender } from "@ton/core";
 
 export type createConfigTypes = {
-    address: Address,
-    counter: number,
-    name: Cell,
+    adminAddress: Address,
+    budget: number,
+    campaignWalletAddress : Address,
+    category: Cell,
+    companyName: Cell,
+    originalUrl: Cell,
 }
 
 const MainContractData = (config: createConfigTypes) => {
-    return beginCell().storeAddress(config.address).storeUint(config.counter, 32).storeRef(config.name).endCell();
+    return beginCell()
+            .storeAddress(config.adminAddress)
+            .storeUint(config.budget, 32)
+            .storeAddress(config.campaignWalletAddress)
+            .storeRef(config.category)
+            .storeRef(config.companyName)
+            .storeRef(config.originalUrl)
+            .endCell();
 }
 
 export class MainContract implements Contract{
@@ -24,16 +34,31 @@ export class MainContract implements Contract{
     }
 
 
-    async sendIncrementCounter(provider: ContractProvider, sender: any ,value: bigint, op: number, incrementBy: number, ownerAddres: Address){
-        await provider.internal(sender,{
+    async sendCampaignCreation(provider: ContractProvider, sender: any, value: bigint, op: number){
+        await provider.internal(sender, {
             value,
             sendMode: SendMode.PAY_GAS_SEPARATELY,
-            body: beginCell().storeUint(op, 32).storeUint(incrementBy, 32).storeAddress(ownerAddres).endCell(),
+            body: beginCell().storeUint(op, 32).endCell(),
         })
     }
 
-    async getData(provider: ContractProvider){
-        const {stack} = await provider.get('get_contract_latest_counter', []);
-        return { address: stack.readAddress(), counter: stack.readNumber(), name: stack.readCell()}
+    async sendWithdrawRequest(provider: ContractProvider, sender : Sender ,value: bigint, affiliateAddress: Address ,amount: bigint) {
+
+        const msg_body = beginCell()
+            .storeUint(3, 32)
+            .storeCoins(amount)
+            .storeAddress(affiliateAddress)
+            .endCell()
+
+        await provider.internal(sender, {
+            value,
+            sendMode: SendMode.PAY_GAS_SEPARATELY,
+            body: msg_body
+        })
+    }
+
+    async getContractBalance(provider: ContractProvider){
+        const {stack} = await provider.get('balance', []);
+        return { balanace: stack.readNumber()}
     }
 }

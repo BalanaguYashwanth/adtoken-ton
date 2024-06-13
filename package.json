@@ -21,7 +21,7 @@
     "typescript": "^5.4.5"
   },
   "scripts": {
-    "compile": "ts-node ./scripts/compile",
+    "compile": "ts-node ./script/compile",
     "test": "yarn compile && yarn jest"
   },
   "dependencies": {

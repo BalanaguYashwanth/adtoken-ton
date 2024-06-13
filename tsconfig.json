@@ -12,4 +12,4 @@
       "transpileOnly": true,
       "transpiler": "ts-node/transpilers/swc"
     }
-  }
+}

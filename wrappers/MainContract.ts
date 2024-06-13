@@ -34,6 +34,6 @@ export class MainContract implements Contract{
 
     async getData(provider: ContractProvider){
         const {stack} = await provider.get('get_contract_latest_counter', []);
-        return {counter: stack.readNumber(), address: stack.readAddress(), name: stack.readCell()}
+        return { address: stack.readAddress(), counter: stack.readNumber(), name: stack.readCell()}
     }
 }

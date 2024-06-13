@@ -3,6 +3,15 @@
 
 #include "imports/stdlib.fc";
 
+(slice, int, cell) load_data() inline {
+    slice ds =  get_data().begin_parse(); ;; these values get from config
+    return (ds~load_msg_addr(), ds~load_uint(32), ds~load_ref()); ;; should be order according to config
+}
+
+() save_data(slice address, int counter_value, cell name) impure inline {
+    set_data(begin_cell().store_slice(address).store_uint(counter_value, 32).store_ref(name).end_cell()); ;; order should be according to config
+}
+
 () recv_internal(int msg_value, cell in_msg, slice in_msg_body) impure {
     slice cs = in_msg.begin_parse();
     int flags = cs~load_uint(4);
@@ -14,16 +23,12 @@
     int increment_value = in_msg_body~load_uint(32);
     slice counter_user_address = in_msg_body~load_msg_addr(); ;; address comes from send_increment_fn
     
-    if(op == 1){
-        slice ds =  get_data().begin_parse(); ;; get data comes from initial config of smart contract
-        slice init_address = ds~load_msg_addr(); ;; this comes from inital config data but we are not using it 
-        int counter = ds~load_uint(32); ;; counter comes from the config 
-        cell name = ds~load_ref();
-        set_data(begin_cell().store_uint(counter + increment_value + 1, 32).store_slice(counter_user_address).store_ref(name).end_cell());
+    var (init_address, counter, name) = load_data();
+    if(op == 1){    
+        save_data(counter_user_address, counter + increment_value + 1, name);  ;; should be order according to config
     }
 }
 
-(int, slice, cell) get_contract_latest_counter() method_id {
-    slice ds = get_data().begin_parse();
-    return (ds~load_uint(32),ds~load_msg_addr(),ds~load_ref());
+(slice, int, cell) get_contract_latest_counter() method_id {
+    return load_data();
 }

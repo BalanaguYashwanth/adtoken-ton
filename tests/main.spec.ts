@@ -26,7 +26,7 @@ describe('main.fc contract tests', ()=>{
         const nameSlice = decodeNameCell.beginParse();
         const nameBytes = nameSlice.preloadBuffer(nameSlice.remainingBits / 8); // Preload the buffer from the slice
         const name = Buffer.from(nameBytes).toString('utf-8'); // Convert buffer to string
-        console.log('name-->', name)
+        expect(name).toBe('{name:yash, age:20}')
         expect(data.counter).toBe(3)
     })
 })

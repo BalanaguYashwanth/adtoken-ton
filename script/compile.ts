@@ -12,6 +12,7 @@ async function compileScript() {
   });
 
   if (compileResult.status === "error") {
+    console.log('compile message---', compileResult.message)
     process.exit(1);
   }
 

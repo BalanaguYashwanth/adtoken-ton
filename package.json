@@ -7,7 +7,9 @@
   "devDependencies": {
     "@babel/preset-typescript": "^7.24.7",
     "@swc/core": "^1.5.28",
+    "@ton-community/blueprint": "^0.12.0",
     "@ton-community/func-js": "^0.7.0",
+    "@ton/blueprint": "^0.21.0",
     "@ton/core": "^0.56.3",
     "@ton/sandbox": "^0.20.0",
     "@ton/test-utils": "^0.4.2",
@@ -21,13 +23,14 @@
     "typescript": "^5.4.5"
   },
   "scripts": {
-    "compile": "ts-node ./script/compile",
-    "test": "yarn compile && yarn jest"
+    "compile": "ts-node ./scripts/compile",
+    "test": " yarn jest"
   },
   "dependencies": {
     "@babel/core": "^7.24.7",
     "@babel/preset-env": "^7.24.7",
     "@ton/crypto": "^3.2.0",
-    "babel-jest": "^29.7.0"
+    "babel-jest": "^29.7.0",
+    "ton-core": "^0.53.0"
   }
 }

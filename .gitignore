@@ -2,3 +2,4 @@
 build
 node_modules
 contracts/imports/stdlib.fc
+testnet

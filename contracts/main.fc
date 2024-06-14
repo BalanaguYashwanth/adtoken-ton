@@ -14,6 +14,7 @@ const const::min_tons_for_storage = 10000000; ;; 0.01 TON
 
 () save_data(slice admin_address, int budget, slice campaign_wallet_address, cell category, cell company_name, cell original_url, slice user_address) impure inline {
     slice ds = get_data().begin_parse();
+    slice address = ds~load_msg_addr();
     cell user_data_map = ds~load_dict(); 
 
     cell user_data = begin_cell()
@@ -38,6 +39,7 @@ const const::min_tons_for_storage = 10000000; ;; 0.01 TON
 
 () save_affiliate_data(slice affiliate_address, slice campaign_address, cell shortner_url, cell original_url, int total_clicks, int total_earned) impure inline {
     slice ds = get_data().begin_parse();
+    slice address = ds~load_msg_addr();
     cell user_data_map = ds~load_dict();
 
     cell user_data = begin_cell()

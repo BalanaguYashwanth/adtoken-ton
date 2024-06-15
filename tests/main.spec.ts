@@ -52,14 +52,30 @@ describe('main.fc contract tests', ()=>{
             originalUrl: originalUrlCell,
             campaignHashAddress: senderWallet.address,
         }
-        const sentMessageResult = await myContract.sendCampaignCreation(senderWallet.getSender(), toNano("5"),campaignconfig);
+        const sentMessageResult = await myContract.sendCampaignCreation(senderWallet.getSender(), toNano("1"),campaignconfig);
+
         
         expect(sentMessageResult.transactions).toHaveTransaction({
             from: senderWallet.address,
             to: myContract.address,
             success: true,
           });
+         
+          const campaignconfig1 = {
+            budget: 1,
+            campaignWalletAddress: affiliateWallet.address,
+            category: categoryCell,
+            companyName: companyNameCell,
+            originalUrl: originalUrlCell,
+            campaignHashAddress: affiliateWallet.address,
+        }
+        const sentMessageResult1 = await myContract.sendCampaignCreation(senderWallet.getSender(), toNano("1"),campaignconfig1);
 
+        expect(sentMessageResult1.transactions).toHaveTransaction({
+            from: senderWallet.address,
+            to: myContract.address,
+            success: true,
+          });
         //   const withdrawRequest = await myContract.sendWithdrawRequest(adminWallet.getSender(), toNano("0.05"), affiliateWallet.address, toNano("1"));
         //   expect(withdrawRequest.transactions).toHaveTransaction({
         //       from: myContract.address,
@@ -71,6 +87,28 @@ describe('main.fc contract tests', ()=>{
   
         //   const data = await myContract.getContractBalance();
         //   console.log('data--->', data)
+    })
+
+    it('other', async ()=>{
+        const companyNameCell = beginCell().storeBuffer(Buffer.from('test company','utf-8')).endCell();
+        const originalUrlCell = beginCell().storeBuffer(Buffer.from('www.originalUrl.com', 'utf-8')).endCell();
+        const categoryCell = beginCell().storeBuffer(Buffer.from('gaming', 'utf-8')).endCell();
+
+        const campaignconfig1 = {
+            budget: 1,
+            campaignWalletAddress: affiliateWallet.address,
+            category: categoryCell,
+            companyName: companyNameCell,
+            originalUrl: originalUrlCell,
+            campaignHashAddress: affiliateWallet.address,
+        }
+        const sentMessageResult1 = await myContract.sendCampaignCreation(senderWallet.getSender(), toNano("1"),campaignconfig1);
+
+        expect(sentMessageResult1.transactions).toHaveTransaction({
+            from: senderWallet.address,
+            to: myContract.address,
+            success: true,
+          });
     })
 
     it('affiliate creation', async()=>{
@@ -89,6 +127,23 @@ describe('main.fc contract tests', ()=>{
         const sendAffiliateResult = await myContract.sendAffiliateCreation(senderWallet.getSender(), toNano("1"), affiliateconfig);
         
         expect(sendAffiliateResult.transactions).toHaveTransaction({
+            from: senderWallet.address,
+            to: myContract.address,
+            success: true,
+          });
+          
+          const affiliateconfig1 = {
+            affiliate_address: adminWallet.address,
+            campaign_address: senderWallet.address,
+            shortner_url,
+            original_url,
+            total_clicks: 2,
+            total_earned: 1,
+            affiliateHashAddress: adminWallet.address
+        }
+        const sendAffiliateResult1 = await myContract.sendAffiliateCreation(senderWallet.getSender(), toNano("1"), affiliateconfig1);
+        
+        expect(sendAffiliateResult1.transactions).toHaveTransaction({
             from: senderWallet.address,
             to: myContract.address,
             success: true,

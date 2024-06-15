@@ -26,10 +26,11 @@ const const::min_tons_for_storage = 10000000; ;; 0.01 TON
         .store_ref(original_url)
         .end_cell();
     
-    user_data_map~udict_set(256, campaign_wallet_address~load_uint(32), user_data.begin_parse());
+    user_data_map~udict_set(256, campaign_wallet_address~load_uint(256), user_data.begin_parse());
 
     set_data(
       begin_cell()
+        .store_slice(address)
         .store_dict(user_data_map)
       .end_cell()
     );
@@ -49,10 +50,12 @@ const const::min_tons_for_storage = 10000000; ;; 0.01 TON
                     .store_uint(total_earned, 32)
                     .end_cell();
     
-    user_data_map~udict_set(256, unique_hash~load_uint(32), user_data.begin_parse());
+    ;;todo - check this unique hash needs to work correctly test it
+    user_data_map~udict_set(256, unique_hash~load_uint(256), user_data.begin_parse());
     
     set_data(
             begin_cell()
+            .store_slice(address)
             .store_dict(user_data_map)
             .end_cell()
         );
@@ -124,11 +127,11 @@ const const::min_tons_for_storage = 10000000; ;; 0.01 TON
         return ();
     }
     
-    if(op == 3){
+     if (op == 3) {
         throw_unless(103, equal_slice_bits(sender_address, admin_address));
         int withdraw_amount = in_msg_body~load_coins();
         slice affiliate_address = in_msg_body~load_msg_addr();
-        var [balance, _] = get_balance(); ;;smart contract balanace
+        var [balance, _] = get_balance(); ;; smart contract balance
         throw_unless(104, balance >= withdraw_amount);
 
         int return_value = min(withdraw_amount, balance - const::min_tons_for_storage);
@@ -154,9 +157,9 @@ const const::min_tons_for_storage = 10000000; ;; 0.01 TON
         return ();
     }
 
-    if( op == 5){
-        return ();
-    }
+    ;; if( op == 5){
+    ;;     return ();
+    ;; }
 
     throw(777);
 }

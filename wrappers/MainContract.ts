@@ -2,16 +2,37 @@ import { Address, Contract, Cell, contractAddress, beginCell, ContractProvider, 
 
 export type createConfigTypes = {
     adminAddress: Address,
+}
+
+export type CampaignConfigTypes = {
     budget: number,
-    campaignWalletAddress : Address,
+    campaignWalletAddress: Address,
     category: Cell,
     companyName: Cell,
     originalUrl: Cell,
+};
+
+export type AffiliateConfigTypes = {
+    affiliate_address: Address,
+    campaign_address: Address,
+    shortner_url: Cell,
+    original_url: Cell,
+    total_clicks: number,
+    total_earned: number,
 }
 
 export const MainContractData = (config: createConfigTypes): Cell => {
-    return beginCell().storeAddress(config.adminAddress).storeUint(config.budget, 32).storeAddress(config.campaignWalletAddress).storeRef(config.category).storeRef(config.companyName).storeRef(config.originalUrl).endCell();
+    return beginCell().storeAddress(config.adminAddress).storeDict(null).endCell();
 }
+
+export const CampaignContractData = (config: CampaignConfigTypes): Cell => {
+    return beginCell().storeUint(config.budget, 32).storeAddress(config.campaignWalletAddress).storeRef(config.category).storeRef(config.companyName).storeRef(config.originalUrl).endCell();
+};
+
+export const AffiliateContractData = (config: AffiliateConfigTypes): Cell => {
+    return beginCell().storeAddress(config.affiliate_address).storeAddress(config.campaign_address).storeRef(config.shortner_url).storeRef(config.original_url).storeUint(config.total_clicks, 32).storeUint(config.total_earned, 32).endCell();
+};
+
 
 export class MainContract implements Contract{
     constructor(
@@ -33,16 +54,23 @@ export class MainContract implements Contract{
         })
     }
 
-    async sendCampaignCreation(provider: ContractProvider, sender: any, value: bigint, op: number){
+    async sendCampaignCreation(provider: ContractProvider, sender: any, value: bigint, campaignData: Cell){
         await provider.internal(sender, {
             value,
             sendMode: SendMode.PAY_GAS_SEPARATELY,
-            body: beginCell().storeUint(op, 32).endCell(),
+            body: beginCell().storeUint(1, 32).storeRef(campaignData).endCell(),
+        })
+    }
+
+    async sendAffiliateCreation(provider: ContractProvider, sender: any, value: bigint, affiliateData: Cell){
+        await provider.internal(sender, {
+            value,
+            sendMode: SendMode.PAY_GAS_SEPARATELY,
+            body: beginCell().storeUint(2, 32).storeRef(affiliateData).endCell(),
         })
     }
 
     async sendWithdrawRequest(provider: ContractProvider, sender : Sender ,value: bigint, affiliateAddress: Address ,amount: bigint) {
-
         const msg_body = beginCell()
             .storeUint(3, 32)
             .storeCoins(amount)
@@ -53,6 +81,14 @@ export class MainContract implements Contract{
             value,
             sendMode: SendMode.PAY_GAS_SEPARATELY,
             body: msg_body
+        })
+    }
+
+    async sendUpdateAffiliate(provider: ContractProvider, sender: any, value: bigint, affiliateUniqueHashAddress: Address, earnedCoin: number){
+        await provider.internal(sender, {
+            value,
+            sendMode: SendMode.PAY_GAS_SEPARATELY,
+            body: beginCell().storeUint(4, 32).storeAddress(affiliateUniqueHashAddress).storeUint(earnedCoin, 32).endCell(),
         })
     }
 

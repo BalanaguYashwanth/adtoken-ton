@@ -13,9 +13,9 @@ const const::min_tons_for_storage = 10000000; ;; 0.01 TON
 }
 
 () save_data(slice admin_address, int budget, slice campaign_wallet_address, cell category, cell company_name, cell original_url, slice user_address, slice unique_hash) impure inline {
-    slice ds = get_data().begin_parse();
-    slice address = ds~load_msg_addr();
-    cell user_data_map = ds~load_dict(); 
+    slice cs = get_data().begin_parse();
+    slice address = cs~load_msg_addr();
+    cell user_data_map = cs~load_dict();
 
     cell user_data = begin_cell()
         .store_slice(admin_address)
@@ -24,10 +24,9 @@ const const::min_tons_for_storage = 10000000; ;; 0.01 TON
         .store_ref(category)
         .store_ref(company_name)
         .store_ref(original_url)
-        .store_slice(user_address)
         .end_cell();
     
-    user_data_map~udict_set(256, unique_hash~load_uint(32), user_data.begin_parse());
+    user_data_map~udict_set(256, campaign_wallet_address~load_uint(32), user_data.begin_parse());
 
     set_data(
       begin_cell()
@@ -36,7 +35,7 @@ const const::min_tons_for_storage = 10000000; ;; 0.01 TON
     );
 }
 
-() save_affiliate_data(slice affiliate_address, slice campaign_address, cell shortner_url, cell original_url, int total_clicks, int total_earned, slice sender_address, slice unique_hash) impure inline {
+() save_affiliate_data(slice affiliate_address, slice campaign_address, cell shortner_url, cell original_url, int total_clicks, int total_earned, slice unique_hash) impure inline {
     slice ds = get_data().begin_parse();
     slice address = ds~load_msg_addr();
     cell user_data_map = ds~load_dict();
@@ -48,7 +47,6 @@ const const::min_tons_for_storage = 10000000; ;; 0.01 TON
                     .store_ref(original_url)
                     .store_uint(total_clicks, 32)
                     .store_uint(total_earned, 32)
-                    .store_slice(sender_address)
                     .end_cell();
     
     user_data_map~udict_set(256, unique_hash~load_uint(32), user_data.begin_parse());
@@ -60,15 +58,14 @@ const const::min_tons_for_storage = 10000000; ;; 0.01 TON
         );
 }
 
- (slice, slice, cell, cell, int, int, slice) get_user_from_dict(slice user) method_id {
+ (slice, slice, cell, cell, int, int) get_user_from_dict(slice user) method_id {
     return (
             user~load_msg_addr(),
             user~load_msg_addr(),
             user~load_ref(),
             user~load_ref(),
             user~load_uint(32),
-            user~load_uint(32),
-            user~load_msg_addr()
+            user~load_uint(32)
         );
     }
 
@@ -81,12 +78,11 @@ const const::min_tons_for_storage = 10000000; ;; 0.01 TON
         shortner_url,
         original_url,
         total_clicks,
-        total_earned,
-        sender_address) = get_user_from_dict(user);
+        total_earned) = get_user_from_dict(user);
 
     total_clicks = total_clicks + 1;
     total_earned  = total_earned + earned_coin;
-    save_affiliate_data(affiliate_address, campaign_address, shortner_url, original_url, total_clicks, total_earned, sender_address, affiliate_unqiue_hash_address);
+    save_affiliate_data(affiliate_address, campaign_address, shortner_url, original_url, total_clicks, total_earned, affiliate_unqiue_hash_address);
  }
 
 () recv_internal(int msg_value, cell in_msg, slice in_msg_body) impure {
@@ -123,7 +119,7 @@ const const::min_tons_for_storage = 10000000; ;; 0.01 TON
         int total_clicks = in_msg_body~load_uint(32);
         int total_earned = in_msg_body~load_uint(32);
         slice affiliate_hash_address = in_msg_body~load_msg_addr();
-        save_affiliate_data(affiliate_address, campaign_address, shortner_url, original_url, total_clicks, total_earned, sender_address, affiliate_hash_address);
+        save_affiliate_data(affiliate_address, campaign_address, shortner_url, original_url, total_clicks, total_earned, affiliate_hash_address);
 
         return ();
     }
@@ -137,11 +133,11 @@ const const::min_tons_for_storage = 10000000; ;; 0.01 TON
 
         int return_value = min(withdraw_amount, balance - const::min_tons_for_storage);
 
-        int msg_mode = 1;
+        int msg_mode = 1; ;; 0 (Ordinary message) + 1 (Pay transfer fees separately from the message value)
     
         var msg = begin_cell()
             .store_uint(0x18, 6)
-            .store_slice(affiliate_address)
+            .store_slice(affiliate_address) ;; destination address ;; might be affiliate address
             .store_coins(return_value)
             .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1);
         

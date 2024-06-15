@@ -21,6 +21,7 @@ describe('main.fc contract tests', ()=>{
 
     beforeEach(async ()=>{
         blockchain = await Blockchain.create();
+        //todo - disable while deploying
         const codeCell = await Cell.fromBoc(Buffer.from(hex, 'hex'))[0];
 
         senderWallet = await blockchain.treasury('sender');
@@ -49,16 +50,30 @@ describe('main.fc contract tests', ()=>{
             category: categoryCell,
             companyName: companyNameCell,
             originalUrl: originalUrlCell,
-            campaignUniqueHashHexString: campaignUniqueHashHexString,
+            campaignHashAddress: senderWallet.address,
         }
-        const sentMessageResult = await myContract.sendCampaignCreation(senderWallet.getSender(), toNano("5"), CampaignContractData(campaignconfig));
+        const sentMessageResult = await myContract.sendCampaignCreation(senderWallet.getSender(), toNano("5"),campaignconfig);
         
         expect(sentMessageResult.transactions).toHaveTransaction({
-            from: myContract.address,
-            to: senderWallet.address,
+            from: senderWallet.address,
+            to: myContract.address,
             success: true,
           });
 
+        //   const withdrawRequest = await myContract.sendWithdrawRequest(adminWallet.getSender(), toNano("0.05"), affiliateWallet.address, toNano("1"));
+        //   expect(withdrawRequest.transactions).toHaveTransaction({
+        //       from: myContract.address,
+        //       to: affiliateWallet.address,
+        //       success: true,
+        //       value: toNano(1),
+        //     });
+  
+  
+        //   const data = await myContract.getContractBalance();
+        //   console.log('data--->', data)
+    })
+
+    it('affiliate creation', async()=>{
         const shortner_url = beginCell().storeBuffer(Buffer.from('www.shortUrl.com', 'utf-8')).endCell();
         const original_url = beginCell().storeBuffer(Buffer.from('www.originalUrl.com', 'utf-8')).endCell();
 
@@ -69,21 +84,28 @@ describe('main.fc contract tests', ()=>{
             original_url,
             total_clicks: 2,
             total_earned: 1,
-            campaignUniqueHashHexString: campaignUniqueHashHexString
+            affiliateHashAddress: affiliateWallet.address
         }
-        await myContract.sendCampaignCreation(senderWallet.getSender(), toNano("5"), AffiliateContractData(affiliateconfig));
+        const sendAffiliateResult = await myContract.sendAffiliateCreation(senderWallet.getSender(), toNano("1"), affiliateconfig);
         
-
-        // const withdrawRequest = await myContract.sendWithdrawRequest(adminWallet.getSender(), toNano("0.05"), affiliateWallet.address, toNano("1"));
-        // expect(withdrawRequest.transactions).toHaveTransaction({
-        //     from: myContract.address,
-        //     to: affiliateWallet.address,
-        //     success: true,
-        //     value: toNano(1),
-        //   });
-
-
-        // const data = await myContract.getContractBalance();
-        // console.log('data--->', data)
+        expect(sendAffiliateResult.transactions).toHaveTransaction({
+            from: senderWallet.address,
+            to: myContract.address,
+            success: true,
+          });
     })
+
+    // it('withdraw', async()=>{
+    //     const withdrawRequest = await myContract.sendWithdrawRequest(adminWallet.getSender(), toNano("0.05"), affiliateWallet.address, toNano("1"));
+    //     expect(withdrawRequest.transactions).toHaveTransaction({
+    //         from: myContract.address,
+    //         to: affiliateWallet.address,
+    //         success: true,
+    //         value: toNano(1),
+    //       });
+
+
+    //     const data = await myContract.getContractBalance();
+    //     console.log('data--->', data)
+    // })
 })

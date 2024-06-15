@@ -24,7 +24,7 @@
   },
   "scripts": {
     "compile": "ts-node ./scripts/compile",
-    "test": " yarn jest"
+    "test": "yarn compile && yarn jest"
   },
   "dependencies": {
     "@babel/core": "^7.24.7",

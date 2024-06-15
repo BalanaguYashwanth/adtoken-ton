@@ -1,4 +1,4 @@
-import { Address, Contract, Cell, contractAddress, beginCell, ContractProvider, SendMode, Sender } from "@ton/core";
+import { Address, Contract, Cell, contractAddress, beginCell, ContractProvider, SendMode, Sender, Dictionary } from "@ton/core";
 
 export type createConfigTypes = {
     adminAddress: Address,
@@ -10,6 +10,7 @@ export type CampaignConfigTypes = {
     category: Cell,
     companyName: Cell,
     originalUrl: Cell,
+    campaignHashAddress: Address,
 };
 
 export type AffiliateConfigTypes = {
@@ -19,20 +20,20 @@ export type AffiliateConfigTypes = {
     original_url: Cell,
     total_clicks: number,
     total_earned: number,
+    affiliateHashAddress: Address,
 }
 
 export const MainContractData = (config: createConfigTypes): Cell => {
-    return beginCell().storeAddress(config.adminAddress).storeDict(null).endCell();
+    return beginCell().storeAddress(config.adminAddress).storeDict(Dictionary.empty(Dictionary.Keys.Uint(256), Dictionary.Values.Address())).endCell();
 }
 
 export const CampaignContractData = (config: CampaignConfigTypes): Cell => {
-    return beginCell().storeUint(config.budget, 32).storeAddress(config.campaignWalletAddress).storeRef(config.category).storeRef(config.companyName).storeRef(config.originalUrl).endCell();
+    return beginCell().storeUint(config.budget, 32).storeAddress(config.campaignWalletAddress).storeRef(config.category).storeRef(config.companyName).storeRef(config.originalUrl).storeAddress(config.campaignHashAddress).endCell();
 };
 
 export const AffiliateContractData = (config: AffiliateConfigTypes): Cell => {
-    return beginCell().storeAddress(config.affiliate_address).storeAddress(config.campaign_address).storeRef(config.shortner_url).storeRef(config.original_url).storeUint(config.total_clicks, 32).storeUint(config.total_earned, 32).endCell();
+    return beginCell().storeAddress(config.affiliate_address).storeAddress(config.campaign_address).storeRef(config.shortner_url).storeRef(config.original_url).storeUint(config.total_clicks, 32).storeUint(config.total_earned, 32).storeAddress(config.affiliateHashAddress).endCell();
 };
-
 
 export class MainContract implements Contract{
     constructor(
@@ -41,6 +42,7 @@ export class MainContract implements Contract{
 
     static createFromConfig(config: createConfigTypes, code: Cell, workchain = 0){
         const data = MainContractData(config);
+        
         const init = {code, data}
         const address = contractAddress(workchain,init);
         return new MainContract(address, init)
@@ -54,19 +56,19 @@ export class MainContract implements Contract{
         })
     }
 
-    async sendCampaignCreation(provider: ContractProvider, sender: any, value: bigint, campaignData: Cell){
+    async sendCampaignCreation(provider: ContractProvider, sender: any, value: bigint, config: CampaignConfigTypes){
         await provider.internal(sender, {
             value,
             sendMode: SendMode.PAY_GAS_SEPARATELY,
-            body: beginCell().storeUint(1, 32).storeRef(campaignData).endCell(),
+            body: beginCell().storeUint(1, 32).storeUint(config.budget, 32).storeAddress(config.campaignWalletAddress).storeRef(config.category).storeRef(config.companyName).storeRef(config.originalUrl).storeAddress(config.campaignHashAddress).endCell(),
         })
     }
 
-    async sendAffiliateCreation(provider: ContractProvider, sender: any, value: bigint, affiliateData: Cell){
+    async sendAffiliateCreation(provider: ContractProvider, sender: any, value: bigint, config: AffiliateConfigTypes){
         await provider.internal(sender, {
             value,
             sendMode: SendMode.PAY_GAS_SEPARATELY,
-            body: beginCell().storeUint(2, 32).storeRef(affiliateData).endCell(),
+            body: beginCell().storeUint(2, 32).storeAddress(config.affiliate_address).storeAddress(config.campaign_address).storeRef(config.shortner_url).storeRef(config.original_url).storeUint(config.total_clicks, 32).storeUint(config.total_earned, 32).storeAddress(config.affiliateHashAddress).endCell(),
         })
     }
 

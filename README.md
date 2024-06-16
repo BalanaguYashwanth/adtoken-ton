@@ -1,4 +1,4 @@
-# About [Adtoken.co](https://ton-adtoken.web.app)
+# About [Adtoken.co](https://ton-adtoken.web.app) [Testnet]
 
 - Decentralized, transparent advertising dapp on the Telegram open network
 
@@ -14,3 +14,4 @@
 
 - FunC with Typescript TON wrapper [adtoken source code] - https://github.com/BalanaguYashwanth/adtoken-ton
 
+Currently we are live in Testnet soon pushing to Mainnet

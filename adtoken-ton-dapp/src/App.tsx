@@ -13,10 +13,6 @@ function App() {
     withdrawCampaign,
   } = useMainContract();
 
-  const handleCreate = async () => {
-    await sendCreateCampaign()
-  }
-
   return (
     <div>
       <div>
@@ -38,7 +34,7 @@ function App() {
 
         {
           connected && (<> 
-            <p onClick={handleCreate}> create campaign </p>
+            <p onClick={sendCreateCampaign}> create campaign </p>
             <p onClick={withdrawCampaign}> get withdraw </p>
             </>)
         }

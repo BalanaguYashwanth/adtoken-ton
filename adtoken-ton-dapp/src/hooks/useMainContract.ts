@@ -32,7 +32,6 @@ export function useMainContract() {
     const originalUrlCell = beginCell().storeBuffer(Buffer.from('www.originalUrl.com', 'utf-8')).endCell();
     const categoryCell = beginCell().storeBuffer(Buffer.from('gaming', 'utf-8')).endCell();
 
-    
     const campaignconfig = {
       budget: 1,
       campaignWalletAddress: address(""),

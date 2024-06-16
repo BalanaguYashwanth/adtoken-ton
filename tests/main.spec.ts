@@ -1,7 +1,7 @@
 import { Cell, beginCell, toNano } from "@ton/core";
 import { hex } from '../build/main.compiled.json';
 import { Blockchain, SandboxContract, TreasuryContract } from "@ton/sandbox";
-import { AffiliateContractData, CampaignContractData, MainContract } from "../wrappers/MainContract";
+import {  MainContract } from "../wrappers/MainContract";
 import {compile} from "@ton-community/blueprint";
 import "@ton/test-utils";
 import { generateUniqueHashFromAddress } from "../helpers";
@@ -76,17 +76,21 @@ describe('main.fc contract tests', ()=>{
             to: myContract.address,
             success: true,
           });
-        //   const withdrawRequest = await myContract.sendWithdrawRequest(adminWallet.getSender(), toNano("0.05"), affiliateWallet.address, toNano("1"));
-        //   expect(withdrawRequest.transactions).toHaveTransaction({
-        //       from: myContract.address,
-        //       to: affiliateWallet.address,
-        //       success: true,
-        //       value: toNano(1),
-        //     });
+
+          const data1 = await myContract.getContractBalance();
+          console.log('before balance--->', data1)
+
+          const withdrawRequest = await myContract.sendWithdrawRequest(adminWallet.getSender(), toNano("0.05"), affiliateWallet.address, toNano("1.4")); //this 1.4 should be same
+          expect(withdrawRequest.transactions).toHaveTransaction({
+              from: myContract.address,
+              to: affiliateWallet.address,
+              success: true,
+              value: toNano(1.4),  //this 1.4 should be same
+            });
   
   
-        //   const data = await myContract.getContractBalance();
-        //   console.log('data--->', data)
+          const data = await myContract.getContractBalance();
+          console.log('after balance--->', data)
     })
 
     it('other', async ()=>{

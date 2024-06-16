@@ -1,14 +1,13 @@
 import { toNano } from "ton-core";
+import { Address } from "@ton/core";
 import { compile, NetworkProvider } from "@ton/blueprint";
 import { MainContract } from "../wrappers/MainContract";
-import { getWalletAddress } from "../helpers";
 
 export async function run(provider: NetworkProvider) {
   try{
-    const adminWalletAddress = await getWalletAddress(process.env.SENDER_MNEMONIC || '')
     const myContract = MainContract.createFromConfig(
       {
-        adminAddress: adminWalletAddress,
+        adminAddress: Address.parse("admin-address"),
       },
       await compile("MainContract")
     );

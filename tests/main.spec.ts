@@ -4,7 +4,6 @@ import { Blockchain, SandboxContract, TreasuryContract } from "@ton/sandbox";
 import {  MainContract } from "../wrappers/MainContract";
 import {compile} from "@ton-community/blueprint";
 import "@ton/test-utils";
-import { generateUniqueHashFromAddress } from "../helpers";
 
 describe('main.fc contract tests', ()=>{
 
@@ -40,9 +39,6 @@ describe('main.fc contract tests', ()=>{
         const companyNameCell = beginCell().storeBuffer(Buffer.from('test company','utf-8')).endCell();
         const originalUrlCell = beginCell().storeBuffer(Buffer.from('www.originalUrl.com', 'utf-8')).endCell();
         const categoryCell = beginCell().storeBuffer(Buffer.from('gaming', 'utf-8')).endCell();
-
-        const campaignUniqueHash = await generateUniqueHashFromAddress(senderWallet.address.toString())
-        const campaignUniqueHashHexString = campaignUniqueHash.toString('hex')
         
         const campaignconfig = {
             budget: 1,

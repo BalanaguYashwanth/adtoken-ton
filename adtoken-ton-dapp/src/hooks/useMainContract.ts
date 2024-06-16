@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
 import { Address, OpenedContract } from "ton-core";
 import { address, beginCell } from "@ton/core";
@@ -6,14 +7,13 @@ import { useTonConnect } from "./useTonConnect";
 import { MainContract } from "../contracts/MainContract";
 import { useTonClient } from "./useTonClient";
 import { useAsyncInitialize } from "./useAsyncInitialize";
-import { generateUniqueHashFromAddress } from "../common/helpers";
 
 export function useMainContract() {
   const client = useTonClient();
   const {sender} = useTonConnect();
   const [balance, setBalance] = useState('')
 
-  const mainContract = useAsyncInitialize(async () => {
+  const mainContract: any = useAsyncInitialize(async () => {
     if (!client) return;
     const contract = new MainContract(
       Address.parse("") // todo - replace with your address from tutorial 2 step 8
@@ -28,11 +28,6 @@ export function useMainContract() {
   }
 
   const sendCreateCampaign = async () => {
-    const campaignUniqueHash = await generateUniqueHashFromAddress("")
-    const campaignUniqueHashHexString = campaignUniqueHash.toString('hex')
-
-    console.log('campaignUniqueHashHexString--->', campaignUniqueHashHexString)
-
     const companyNameCell = beginCell().storeBuffer(Buffer.from('test company','utf-8')).endCell();
     const originalUrlCell = beginCell().storeBuffer(Buffer.from('www.originalUrl.com', 'utf-8')).endCell();
     const categoryCell = beginCell().storeBuffer(Buffer.from('gaming', 'utf-8')).endCell();

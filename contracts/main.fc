@@ -12,7 +12,7 @@ const const::min_tons_for_storage = 10000000; ;; 0.01 TON
     return (admin_address, ds~load_dict());
 }
 
-() save_data(slice admin_address, int budget, slice campaign_wallet_address, cell category, cell company_name, cell original_url, slice user_address, slice unique_hash) impure inline {
+() save_data(slice admin_address, int budget, slice campaign_wallet_address, cell category, cell company_name, cell original_url, slice user_address, int campaign_id) impure inline {
     slice cs = get_data().begin_parse();
     slice address = cs~load_msg_addr();
     cell user_data_map = cs~load_dict();
@@ -26,7 +26,7 @@ const const::min_tons_for_storage = 10000000; ;; 0.01 TON
         .store_ref(original_url)
         .end_cell();
     
-    user_data_map~udict_set(256, campaign_wallet_address~load_uint(256), user_data.begin_parse());
+    user_data_map~udict_set(256, campaign_id, user_data.begin_parse());
 
     set_data(
       begin_cell()
@@ -36,13 +36,14 @@ const const::min_tons_for_storage = 10000000; ;; 0.01 TON
     );
 }
 
-() save_affiliate_data(slice affiliate_address, slice campaign_address, cell shortner_url, cell original_url, int total_clicks, int total_earned, slice unique_hash) impure inline {
+() save_affiliate_data(slice affiliate_address, int campaign_id, slice campaign_address, cell shortner_url, cell original_url, int total_clicks, int total_earned, int affiliate_id) impure inline {
     slice ds = get_data().begin_parse();
     slice address = ds~load_msg_addr();
     cell user_data_map = ds~load_dict();
 
     cell user_data = begin_cell()
                     .store_slice(affiliate_address)
+                    .store_uint(campaign_id, 32)
                     .store_slice(campaign_address)
                     .store_ref(shortner_url)
                     .store_ref(original_url)
@@ -51,7 +52,7 @@ const const::min_tons_for_storage = 10000000; ;; 0.01 TON
                     .end_cell();
     
     ;;todo - check this unique hash needs to work correctly test it
-    user_data_map~udict_set(256, unique_hash~load_uint(256), user_data.begin_parse());
+    user_data_map~udict_set(256, affiliate_id, user_data.begin_parse());
     
     set_data(
             begin_cell()
@@ -61,9 +62,10 @@ const const::min_tons_for_storage = 10000000; ;; 0.01 TON
         );
 }
 
- (slice, slice, cell, cell, int, int) get_user_from_dict(slice user) method_id {
+ (slice, int, slice, cell, cell, int, int) get_user_from_dict(slice user) method_id {
     return (
             user~load_msg_addr(),
+            user~load_uint(32),
             user~load_msg_addr(),
             user~load_ref(),
             user~load_ref(),
@@ -72,11 +74,12 @@ const const::min_tons_for_storage = 10000000; ;; 0.01 TON
         );
     }
 
- () update_affiliate_data(slice affiliate_unqiue_hash_address, int earned_coin) impure inline {
+ () update_affiliate_data(int affiliate_id, int earned_coin) inline {
     var ( admin_address, users) = load_data();    
-    var (user, f) = udict_get?(users, 256, affiliate_unqiue_hash_address~load_uint(32));
+    var (user, f) = udict_get?(users, 256, affiliate_id);
 
     var (affiliate_address,
+        campaign_id,
         campaign_address,
         shortner_url,
         original_url,
@@ -85,7 +88,7 @@ const const::min_tons_for_storage = 10000000; ;; 0.01 TON
 
     total_clicks = total_clicks + 1;
     total_earned  = total_earned + earned_coin;
-    save_affiliate_data(affiliate_address, campaign_address, shortner_url, original_url, total_clicks, total_earned, affiliate_unqiue_hash_address);
+    save_affiliate_data(affiliate_address, campaign_id, campaign_address, shortner_url, original_url, total_clicks, total_earned, affiliate_id);
  }
 
 () recv_internal(int msg_value, cell in_msg, slice in_msg_body) impure {
@@ -108,21 +111,22 @@ const const::min_tons_for_storage = 10000000; ;; 0.01 TON
         cell category = in_msg_body~load_ref();
         cell company_name = in_msg_body~load_ref();
         cell original_url = in_msg_body~load_ref();
-        slice campaign_hash_address = in_msg_body~load_msg_addr();
-        save_data(admin_address, budget, campaign_wallet_address, category, company_name, original_url, sender_address, campaign_hash_address);
+        int campaign_id = in_msg_body~load_uint(32);
+        save_data(admin_address, budget, campaign_wallet_address, category, company_name, original_url, sender_address, campaign_id);
 
         return ();
     }
 
     if(op == 2){
         slice affiliate_address = in_msg_body~load_msg_addr();
+        int campaign_id = in_msg_body~load_uint(32);
         slice campaign_address = in_msg_body~load_msg_addr();
         cell shortner_url = in_msg_body~load_ref();
         cell original_url = in_msg_body~load_ref();
         int total_clicks = in_msg_body~load_uint(32);
         int total_earned = in_msg_body~load_uint(32);
-        slice affiliate_hash_address = in_msg_body~load_msg_addr();
-        save_affiliate_data(affiliate_address, campaign_address, shortner_url, original_url, total_clicks, total_earned, affiliate_hash_address);
+        int affiliate_id = in_msg_body~load_uint(32);
+        save_affiliate_data(affiliate_address, campaign_id, campaign_address, shortner_url, original_url, total_clicks, total_earned, affiliate_id);
 
         return ();
     }
@@ -150,16 +154,12 @@ const const::min_tons_for_storage = 10000000; ;; 0.01 TON
     }
 
     if( op == 4){
-        slice affiliate_unqiue_hash_address = in_msg_body~load_msg_addr();
+        int affiliate_id = in_msg_body~load_uint(32);
         int earned_coin = in_msg_body~load_uint(32);
-        update_affiliate_data(affiliate_unqiue_hash_address,  earned_coin);
+        update_affiliate_data(affiliate_id,  earned_coin);
 
         return ();
     }
-
-    ;; if( op == 5){
-    ;;     return ();
-    ;; }
 
     throw(777);
 }

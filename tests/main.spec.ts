@@ -4,6 +4,7 @@ import { Blockchain, SandboxContract, TreasuryContract } from "@ton/sandbox";
 import {  MainContract } from "../wrappers/MainContract";
 import {compile} from "@ton-community/blueprint";
 import "@ton/test-utils";
+import { generateUniqueNumericId } from "../helpers";
 
 describe('main.fc contract tests', ()=>{
 
@@ -46,7 +47,7 @@ describe('main.fc contract tests', ()=>{
             category: categoryCell,
             companyName: companyNameCell,
             originalUrl: originalUrlCell,
-            campaignHashAddress: senderWallet.address,
+            campaignId: generateUniqueNumericId(),
         }
         const sentMessageResult = await myContract.sendCampaignCreation(senderWallet.getSender(), toNano("1"),campaignconfig);
 
@@ -63,9 +64,9 @@ describe('main.fc contract tests', ()=>{
             category: categoryCell,
             companyName: companyNameCell,
             originalUrl: originalUrlCell,
-            campaignHashAddress: affiliateWallet.address,
+            campaignId: generateUniqueNumericId(),
         }
-        const sentMessageResult1 = await myContract.sendCampaignCreation(senderWallet.getSender(), toNano("1"),campaignconfig1);
+        const sentMessageResult1 = await myContract.sendCampaignCreation(senderWallet.getSender(), toNano("1"), campaignconfig1);
 
         expect(sentMessageResult1.transactions).toHaveTransaction({
             from: senderWallet.address,
@@ -73,8 +74,8 @@ describe('main.fc contract tests', ()=>{
             success: true,
           });
 
-          const data1 = await myContract.getContractBalance();
-          console.log('before balance--->', data1)
+          const beforeWithdrawBalance = await myContract.getContractBalance();
+          console.log('before withdraw balance--->', beforeWithdrawBalance)
 
           const withdrawRequest = await myContract.sendWithdrawRequest(adminWallet.getSender(), toNano("0.05"), affiliateWallet.address, toNano("1.4")); //this 1.4 should be same
           expect(withdrawRequest.transactions).toHaveTransaction({
@@ -85,8 +86,8 @@ describe('main.fc contract tests', ()=>{
             });
   
   
-          const data = await myContract.getContractBalance();
-          console.log('after balance--->', data)
+          const afterWithdrawBalance = await myContract.getContractBalance();
+          console.log('after withdraw balance--->', afterWithdrawBalance)
     })
 
     it('other', async ()=>{
@@ -100,9 +101,9 @@ describe('main.fc contract tests', ()=>{
             category: categoryCell,
             companyName: companyNameCell,
             originalUrl: originalUrlCell,
-            campaignHashAddress: affiliateWallet.address,
+            campaignId: generateUniqueNumericId(),
         }
-        const sentMessageResult1 = await myContract.sendCampaignCreation(senderWallet.getSender(), toNano("1"),campaignconfig1);
+        const sentMessageResult1 = await myContract.sendCampaignCreation(senderWallet.getSender(), toNano("1"), campaignconfig1);
 
         expect(sentMessageResult1.transactions).toHaveTransaction({
             from: senderWallet.address,
@@ -117,12 +118,13 @@ describe('main.fc contract tests', ()=>{
 
         const affiliateconfig = {
             affiliate_address: affiliateWallet.address,
+            campaignId: generateUniqueNumericId(),
             campaign_address: senderWallet.address,
             shortner_url,
             original_url,
             total_clicks: 2,
-            total_earned: 1,
-            affiliateHashAddress: affiliateWallet.address
+            earned: 1,
+            affiliateId: generateUniqueNumericId()
         }
         const sendAffiliateResult = await myContract.sendAffiliateCreation(senderWallet.getSender(), toNano("1"), affiliateconfig);
         
@@ -134,12 +136,13 @@ describe('main.fc contract tests', ()=>{
           
           const affiliateconfig1 = {
             affiliate_address: adminWallet.address,
+            campaignId: generateUniqueNumericId(),
             campaign_address: senderWallet.address,
             shortner_url,
             original_url,
             total_clicks: 2,
-            total_earned: 1,
-            affiliateHashAddress: adminWallet.address
+            earned: 1,
+            affiliateId: generateUniqueNumericId()
         }
         const sendAffiliateResult1 = await myContract.sendAffiliateCreation(senderWallet.getSender(), toNano("1"), affiliateconfig1);
         
@@ -150,17 +153,22 @@ describe('main.fc contract tests', ()=>{
           });
     })
 
-    // it('withdraw', async()=>{
-    //     const withdrawRequest = await myContract.sendWithdrawRequest(adminWallet.getSender(), toNano("0.05"), affiliateWallet.address, toNano("1"));
-    //     expect(withdrawRequest.transactions).toHaveTransaction({
-    //         from: myContract.address,
-    //         to: affiliateWallet.address,
-    //         success: true,
-    //         value: toNano(1),
-    //       });
+    it('Update affiliate', async()=>{
+        const result = await myContract.sendUpdateAffiliate(senderWallet.getSender(), toNano("0.5"), generateUniqueNumericId(), toNano("1"))
 
+        expect(result.transactions).toHaveTransaction({
+            from: senderWallet.address,
+            to: myContract.address,
+            success: true,
+          });
 
-    //     const data = await myContract.getContractBalance();
-    //     console.log('data--->', data)
-    // })
+        const result1 = await myContract.sendUpdateAffiliate(senderWallet.getSender(), toNano("0.5"), generateUniqueNumericId(), toNano("1"))
+
+        expect(result1.transactions).toHaveTransaction({
+            from: senderWallet.address,
+            to: myContract.address,
+            success: true,
+          });
+    })
+
 })

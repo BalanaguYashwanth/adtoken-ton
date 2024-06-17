@@ -10,30 +10,23 @@ export type CampaignConfigTypes = {
     category: Cell,
     companyName: Cell,
     originalUrl: Cell,
-    campaignHashAddress: Address,
+    campaignId: number,
 };
 
 export type AffiliateConfigTypes = {
     affiliate_address: Address,
+    campaignId: number,
     campaign_address: Address,
     shortner_url: Cell,
     original_url: Cell,
     total_clicks: number,
-    total_earned: number,
-    affiliateHashAddress: Address,
+    earned: number,
+    affiliateId: number,
 }
 
 export const MainContractData = (config: createConfigTypes): Cell => {
     return beginCell().storeAddress(config.adminAddress).storeDict(Dictionary.empty(Dictionary.Keys.Uint(256), Dictionary.Values.Address())).endCell();
 }
-
-export const CampaignContractData = (config: CampaignConfigTypes): Cell => {
-    return beginCell().storeUint(config.budget, 32).storeAddress(config.campaignWalletAddress).storeRef(config.category).storeRef(config.companyName).storeRef(config.originalUrl).storeAddress(config.campaignHashAddress).endCell();
-};
-
-export const AffiliateContractData = (config: AffiliateConfigTypes): Cell => {
-    return beginCell().storeAddress(config.affiliate_address).storeAddress(config.campaign_address).storeRef(config.shortner_url).storeRef(config.original_url).storeUint(config.total_clicks, 32).storeUint(config.total_earned, 32).storeAddress(config.affiliateHashAddress).endCell();
-};
 
 export class MainContract implements Contract{
     constructor(
@@ -60,7 +53,7 @@ export class MainContract implements Contract{
         await provider.internal(sender, {
             value,
             sendMode: SendMode.PAY_GAS_SEPARATELY,
-            body: beginCell().storeUint(1, 32).storeUint(config.budget, 32).storeAddress(config.campaignWalletAddress).storeRef(config.category).storeRef(config.companyName).storeRef(config.originalUrl).storeAddress(config.campaignHashAddress).endCell(),
+            body: beginCell().storeUint(1, 32).storeUint(config.budget, 32).storeAddress(config.campaignWalletAddress).storeRef(config.category).storeRef(config.companyName).storeRef(config.originalUrl).storeUint(config.campaignId, 32).endCell(),
         })
     }
 
@@ -68,7 +61,7 @@ export class MainContract implements Contract{
         await provider.internal(sender, {
             value,
             sendMode: SendMode.PAY_GAS_SEPARATELY,
-            body: beginCell().storeUint(2, 32).storeAddress(config.affiliate_address).storeAddress(config.campaign_address).storeRef(config.shortner_url).storeRef(config.original_url).storeUint(config.total_clicks, 32).storeUint(config.total_earned, 32).storeAddress(config.affiliateHashAddress).endCell(),
+            body: beginCell().storeUint(2, 32).storeAddress(config.affiliate_address).storeUint(config.campaignId, 32).storeAddress(config.campaign_address).storeRef(config.shortner_url).storeRef(config.original_url).storeUint(config.total_clicks, 32).storeUint(config.earned, 32).storeUint(config.affiliateId, 32).endCell(),
         })
     }
 
@@ -86,11 +79,11 @@ export class MainContract implements Contract{
         })
     }
 
-    async sendUpdateAffiliate(provider: ContractProvider, sender: any, value: bigint, affiliateUniqueHashAddress: Address, earnedCoin: number){
+    async sendUpdateAffiliate(provider: ContractProvider, sender: any, value: bigint, affiliateId: number, earnedCoin: bigint){
         await provider.internal(sender, {
             value,
             sendMode: SendMode.PAY_GAS_SEPARATELY,
-            body: beginCell().storeUint(4, 32).storeAddress(affiliateUniqueHashAddress).storeUint(earnedCoin, 32).endCell(),
+            body: beginCell().storeUint(4, 32).storeUint(affiliateId, 32).storeUint(earnedCoin, 32).endCell(),
         })
     }
 
